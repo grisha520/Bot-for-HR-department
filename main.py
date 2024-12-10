@@ -157,7 +157,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
 @app.post("/ask", response_class=HTMLResponse)
 async def post_form(request: Request, question: str = Form(...)):
     global documentation_text
-    reference = "Мы можем компенсировать твои затраты на медицинскую страховку по любой из перечисленных программ: 1. «Поликлиника База» 2. «Поликлиника База + Стоматология» 3. «Поликлиника Бизнес» 4. «Поликлиника Бизнес + Стоматология» 5. «Поликлиника Дети» 6. «Телемедицина, 7. «Поликлиника» "  # Это эталонный ответ для оценки
+    reference = "Введите этвлонный ответ"  # Это эталонный ответ для оценки
     if chunks:
         bot_response = rag_with_chunks(question)
         metrics = evaluate_response(bot_response, reference)
