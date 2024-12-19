@@ -151,13 +151,13 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     async with aiofiles.open(file.filename, "r", encoding="utf-8") as in_file:
         documentation_text = await in_file.read()
     prepare_search_engine(documentation_text)
-    return templates.TemplateResponse("index.html", {"request": request, "response": "Файл успешно загружен!", "doc_loaded": True})
+    return "Файл успешно загружен!"
 
 # Роут для обработки запроса пользователя
 @app.post("/ask", response_class=HTMLResponse)
 async def post_form(request: Request, question: str = Form(...)):
     global documentation_text
-    reference = ""  # Это эталонный ответ для оценки
+    reference = "В корпоративном ТГ канале @USSC_ltd (https://t.me/+Ccat7WcyfM9iN2Yy) мы публикуем самые срочные и важные новости: письма от директоров, информацию о ДМС, анонсы мероприятий и т.д."  # Это эталонный ответ для оценки
     if chunks:
         bot_response = rag_with_chunks(question)
         metrics = evaluate_response(bot_response, reference)
@@ -167,7 +167,7 @@ async def post_form(request: Request, question: str = Form(...)):
             print(f"{metric}: {value:.4f}")
     else:
         bot_response = "Документация не загружена. Загрузите файл и повторите попытку."
-    return templates.TemplateResponse("index.html", {"request": request, "response": bot_response, "doc_loaded": bool(chunks)})
+    return bot_response
 
 import nltk
 nltk.download('punkt')
