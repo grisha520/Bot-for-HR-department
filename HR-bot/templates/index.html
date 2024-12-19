@@ -1,23 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Документационный ассистент</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цифровой ассистент</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #1f2937;
+            margin-bottom: 2rem;
+        }
+        .chat-container {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 48rem;
+            overflow: hidden;
+        }
+        .messages-area {
+            height: 600px;
+            background-color: #e5e7eb;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .input-area {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            gap: 0.5rem;
+        }
+        .file-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            fill: #6b7280;
+        }
+        .question-input {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 9999px;
+            background-color: #f3f4f6;
+        }
+        .question-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        .send-button {
+            background-color: #f97316;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .send-button:hover {
+            background-color: #ea580c;
+        }
+        .send-icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        /* Стиль для шестеренки */
+        .loading-spinner {
+            display: none;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #f97316;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 1rem auto;
+        }
+
+        /* Анимация для шестеренки */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
     <h1>Цифровой ассистент</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <label for="file">Загрузите файл документации:</label>
-        <input type="file" id="file" name="file">
-        <button type="submit">Загрузить</button>
-    </form>
-    <br>
-    <form action="/ask" method="post">
-        <label for="question">Введите ваш вопрос:</label>
-        <input type="text" id="question" name="question">
-        <button type="submit">Спросить</button>
-    </form>
-    <hr>
-    <h2>Ответ:</h2>
-    <p>{{ response }}</p>
+    <div class="chat-container">
+        <div class="messages-area" id="messages-area">
+            <!-- Здесь будут отображаться сообщения -->
+        </div>
+        <div class="input-area">
+            <form id="file-upload-form" action="/upload" method="post" enctype="multipart/form-data" style="display: none;">
+                <input type="file" id="file-input" name="file">
+            </form>
+            <button class="file-button" id="file-button">
+                <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+            </button>
+            <input type="text" class="question-input" id="question-input" placeholder="Введите ваш вопрос...">
+            <button class="send-button" id="send-button">
+                <svg class="send-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+        <!-- Добавляем элемент для шестеренки -->
+        <div class="loading-spinner" id="loading-spinner"></div>
+    </div>
+
+    <script>
+        // Обработчик для кнопки загрузки файла
+        document.getElementById('file-button').addEventListener('click', function() {
+            document.getElementById('file-input').click();
+        });
+
+        // Отправка файла на сервер
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const formData = new FormData();
+            formData.append('file', event.target.files[0]);
+
+            // Показываем шестеренку во время загрузки документации
+            document.getElementById('loading-spinner').style.display = 'block';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('messages-area').innerHTML = `<p>${data}</p>`;
+                document.getElementById('loading-spinner').style.display = 'none'; // Скрываем шестеренку
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                document.getElementById('loading-spinner').style.display = 'none'; // Скрываем шестеренку
+            });
+        });
+
+        // Обработчик для кнопки отправки вопроса
+        document.getElementById('send-button').addEventListener('click', function() {
+            const question = document.getElementById('question-input').value;
+            if (question.trim() === '') {
+                alert('Пожалуйста, введите вопрос.');
+                return;
+            }
+
+            // Показываем шестеренку во время генерации ответа
+            document.getElementById('loading-spinner').style.display = 'block';
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `question=${encodeURIComponent(question)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('messages-area').innerHTML = `<p>${data}</p>`;
+                document.getElementById('loading-spinner').style.display = 'none'; // Скрываем шестеренку
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                document.getElementById('loading-spinner').style.display = 'none'; // Скрываем шестеренку
+            });
+        });
+    </script>
 </body>
 </html>
